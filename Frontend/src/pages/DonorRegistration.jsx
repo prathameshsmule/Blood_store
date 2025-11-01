@@ -6,7 +6,7 @@ import logo from "../assets/images/blood donor.png";
 import "../styles/DonorRegistration.css";
 
 // Use Vite env var (fallback to production domain if not set)
-const API_BASE = import.meta.env.VITE_APP_API_URL || "https://bloodbank.store/api";
+const API_BASE = import.meta.env.VITE_APP_API_URL || "https://blooddonation.store/api";
 
 // EmailJS config from env (don't hardcode keys)
 const EMAILJS_USER = import.meta.env.VITE_EMAILJS_USER || "";
