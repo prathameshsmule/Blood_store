@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import "../styles/Admin.css";
 
-const API_BASE = "https://www.blooddonation.store/api";
+const API_BASE = "https://blooddonation.store/api";
 
 const Admin = () => {
   const [donors, setDonors] = useState([]);
