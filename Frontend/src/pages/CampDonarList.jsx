@@ -28,7 +28,7 @@ const CampDonorList = () => {
   useEffect(() => {
     const fetchCamps = async () => {
       try {
-        const res = await axios.get(`${API_BASE}/camps`);
+        const res = await axios.get(`${API_BASE}/api/camps`);
         const campList = res.data || [];
         setCamps(campList);
 
