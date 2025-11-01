@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_APP_API_URL || "https://bloodbank.store/api";
+const API_BASE = import.meta.env.VITE_APP_API_URL || "https://blooddonation.store/api";
 
 const CampDonorList = () => {
   const location = useLocation();
