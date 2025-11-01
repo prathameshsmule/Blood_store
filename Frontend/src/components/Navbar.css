@@ -1,0 +1,101 @@
+/* visually-hidden */
+.sr-only { position:absolute!important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+/* header */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1400;
+  background: #ffffff; /* plain white */
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+/* container */
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* brand */
+.brand {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  text-decoration: none;
+}
+.brand-logo { width:52px; height:52px; border-radius:8px; object-fit:cover; }
+.brand-text { display:flex; flex-direction:column; line-height:1; }
+.brand-title { font-size:1.05rem; font-weight:800; color:#dc2626; }
+.brand-sub { font-size:0.72rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.4px; }
+
+/* nav links (desktop) */
+.nav-links { margin-left: auto; display:flex; gap:0.5rem; align-items:center; }
+.nav-link {
+  display:inline-flex; gap:0.5rem; align-items:center; padding:0.45rem 0.6rem;
+  border-radius:6px; text-decoration:none; color:#374151; font-weight:600;
+  font-size:0.95rem; transition: color 150ms ease, transform 150ms ease;
+  background: transparent; /* NO background */
+  border-bottom: 3px solid transparent; /* underline space reserved */
+}
+.nav-emoji { font-size:1rem; opacity:0.95; }
+
+/* hover: only color change, no bg */
+.nav-link:hover { color: #222; transform: translateY(-1px); }
+
+/* active: underline (red) and slightly bolder text */
+.nav-link.active {
+  color: #b91c1c;
+  border-bottom-color: #dc2626; /* visible underline */
+  border-bottom-style: solid;
+  border-bottom-width: 3px;
+  padding-bottom: calc(0.45rem - 3px);
+}
+
+/* mobile toggle */
+.nav-toggle { margin-left: 0.5rem; background:transparent; border:none; display:none; width:46px; height:40px; align-items:center; justify-content:center; cursor:pointer; }
+.hamb { width:20px; height:2px; background:#dc2626; display:block; border-radius:2px; transition: transform 180ms, opacity 180ms; }
+.nav-toggle.open .hamb:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-toggle.open .hamb:nth-child(2) { opacity:0; transform:scaleX(0); }
+.nav-toggle.open .hamb:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+/* backdrop + mobile panel */
+.backdrop { position:fixed; inset:0; background: rgba(2,6,23,0.20); opacity:0; visibility:hidden; transition: opacity 200ms, visibility 200ms; z-index:1200; }
+.backdrop.show { opacity:1; visibility:visible; }
+
+.mobile-panel { position:fixed; right:-100%; top:0; height:100vh; width:320px; max-width:92%; background:#fff; box-shadow:-10px 0 30px rgba(2,6,23,0.08); transition:right 260ms cubic-bezier(.2,.9,.2,1); z-index:1250; display:flex; flex-direction:column; overflow-y:auto; }
+.mobile-panel.open { right:0; }
+
+/* mobile header */
+.mobile-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem; border-bottom:1px solid #f3f4f6; }
+.mobile-brand { display:flex; gap:0.6rem; align-items:center; text-decoration:none; color:inherit; }
+.mobile-logo { width:44px; height:44px; border-radius:8px; }
+
+/* mobile links */
+.mobile-links-list { display:flex; flex-direction:column; gap:0.1rem; padding:1rem; }
+.mobile-link {
+  display:flex; gap:0.75rem; align-items:center; padding:0.85rem; border-radius:6px; color:#374151; text-decoration:none; font-weight:700;
+  transition: color 140ms, background 140ms;
+  background: transparent; /* NO background */
+  border-left: 4px solid transparent; /* space for active indicator */
+}
+.mobile-link:hover { color: #222; background: rgba(0,0,0,0.02); }
+.mobile-link.active {
+  color: #b91c1c;
+  border-left-color: #dc2626; /* left indicator for active on mobile */
+  padding-left: calc(0.85rem - 4px);
+}
+
+/* responsive rules */
+@media (max-width: 980px) {
+  .nav-links { display:none; }
+  .nav-toggle { display:flex; }
+}
+@media (max-width: 480px) {
+  .brand-logo { width:44px; height:44px; }
+  .mobile-panel { width:88%; }
+  .mobile-link { padding:0.75rem; font-size:0.95rem; }
+}
