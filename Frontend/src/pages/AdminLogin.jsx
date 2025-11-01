@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/images/admin logo.png";
 
-const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "https://bloodbank.store/api";
+const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "https://blooddonation.store/api";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
