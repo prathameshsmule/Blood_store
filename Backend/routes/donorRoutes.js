@@ -4,7 +4,70 @@ import Donor from '../models/Donor.js'
 import { verifyToken } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
+// Create donor
+router.post('/', verifyToken, async (req, res) => {
+  try {
+    const {
+      name,
+      dob,
+      age,
+      weight,
+      bloodGroup,
+      email,
+      phone,
+      address,
+      camp,
+      remark
+    } = req.body;
 
+    // Basic validation
+    if (!name || !dob || !weight || !bloodGroup || !phone || !camp) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(camp)) {
+      return res.status(400).json({ message: 'Invalid Camp ID' });
+    }
+
+    // Optionally confirm camp exists (recommended)
+    if (typeof Camp !== 'undefined') {
+      const campExists = await Camp.findById(camp);
+      if (!campExists) {
+        return res.status(400).json({ message: 'Referenced camp not found' });
+      }
+    }
+
+    // Normalize numeric fields
+    const numericWeight = Number(weight);
+    const numericAge = age ? Number(age) : null;
+
+    const donorData = {
+      name: name.trim(),
+      dob: new Date(dob),
+      age: numericAge,
+      weight: numericWeight,
+      bloodGroup,
+      email: email ? email.trim() : '',
+      phone: phone.trim(),
+      address: address ? address.trim() : '',
+      camp,
+      remark: remark || ''
+    };
+
+    const newDonor = new Donor(donorData);
+    const saved = await newDonor.save();
+
+    // return created donor
+    return res.status(201).json(saved);
+  } catch (err) {
+    console.error('Error creating donor:', err);
+    // Turn known validation errors into 400
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message, errors: err.errors });
+    }
+    return res.status(500).json({ message: 'Error creating donor', error: err.message });
+  }
+});
 // Get donors by camp
 router.get('/camp/:campId', verifyToken, async (req, res) => {
   try {
