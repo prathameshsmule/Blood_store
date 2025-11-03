@@ -1,4 +1,5 @@
-import mongoose from 'mongoose'
+// models/Donor.js
+import mongoose from 'mongoose';
 
 const donorSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -6,11 +7,11 @@ const donorSchema = new mongoose.Schema({
   age: { type: Number, required: true },
   weight: { type: Number, required: true },
   bloodGroup: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: false, default: '' },
   phone: { type: String, required: true },
   address: { type: String, required: true },
   camp: { type: mongoose.Schema.Types.ObjectId, ref: 'Camp', required: true },
   remark: { type: String, default: '' },
-}, { timestamps: true })
+}, { timestamps: true });
 
-export default mongoose.model('Donor', donorSchema)
+export default mongoose.model('Donor', donorSchema);
