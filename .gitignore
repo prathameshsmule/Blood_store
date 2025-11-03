@@ -1,0 +1,14 @@
+
+# local env files
+Backend/.env
+Frontend/.env
+
+# ignore node modules
+node_modules/
+Backend/node_modules/
+Frontend/node_modules/
+
+# ignore backup files
+*.bak
+*.backup_*
+*.bak_from_*
