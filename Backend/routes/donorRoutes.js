@@ -5,7 +5,7 @@ import { verifyToken } from '../middleware/authMiddleware.js'
 
 const router = express.Router()
 // Create donor
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       name,
