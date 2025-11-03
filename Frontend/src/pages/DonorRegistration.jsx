@@ -43,19 +43,22 @@ const DonorRegistration = () => {
   };
   const isUpcoming = (isoDateString) => {
     if (!isoDateString) return false;
-    const today = startOfDay(new Date());
-    const campDay = startOfDay(new Date(isoDateString));
-    return campDay.getTime() >= today.getTime();
+    try {
+      const today = startOfDay(new Date());
+      const campDay = startOfDay(new Date(isoDateString));
+      return campDay.getTime() >= today.getTime();
+    } catch {
+      return false;
+    }
   };
 
   // Initialize EmailJS from env (if key available)
   useEffect(() => {
-    if (EMAILJS_USER) {
-      try {
-        emailjs.init(EMAILJS_USER);
-      } catch (err) {
-        console.warn("EmailJS init failed:", err);
-      }
+    if (!EMAILJS_USER) return;
+    try {
+      emailjs.init(EMAILJS_USER);
+    } catch (err) {
+      console.warn("EmailJS init failed:", err);
     }
   }, []);
 
@@ -66,7 +69,8 @@ const DonorRegistration = () => {
       setCampNotice("");
       try {
         const res = await axios.get(`${API_BASE}/camps`);
-        const upcoming = (res.data || [])
+        const allCamps = Array.isArray(res.data) ? res.data : [];
+        const upcoming = allCamps
           .filter((c) => isUpcoming(c?.date))
           .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -85,8 +89,11 @@ const DonorRegistration = () => {
               "The camp link you followed is no longer available or already completed. Please pick another upcoming camp."
             );
             setCampLocked(false);
-            // optionally set camp to campIdFromUrl so backend can check — commented out to avoid invalid submissions
-            // setFormData(prev => ({ ...prev, camp: campIdFromUrl }));
+          }
+        } else {
+          // If only one upcoming camp, auto-select it for convenience
+          if (upcoming.length === 1) {
+            setFormData((prev) => ({ ...prev, camp: upcoming[0]._id }));
           }
         }
       } catch (err) {
@@ -103,6 +110,7 @@ const DonorRegistration = () => {
   const calculateAge = (dobValue) => {
     if (!dobValue) return null;
     const birthDate = new Date(dobValue);
+    if (Number.isNaN(birthDate.getTime())) return null;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
@@ -110,41 +118,70 @@ const DonorRegistration = () => {
     return age;
   };
 
+  useEffect(() => {
+    // if a dob already exists in formData (e.g., restored from somewhere), calculate
+    if (formData.dob) {
+      setCalculatedAge(calculateAge(formData.dob));
+    } else {
+      setCalculatedAge(null);
+    }
+  }, [formData.dob]);
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let value = e.target.value;
+
+    // trim most text inputs on change (phone and email kept trimmed)
+    if (typeof value === "string") value = value.trimStart();
+
     setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (name === "dob") {
       setCalculatedAge(calculateAge(value));
     }
   };
 
   const validateForm = () => {
-    if (!formData.name.trim()) {
+    const name = formData.name?.trim();
+    if (!name) {
       alert("कृपया नाव भरा.");
       return false;
     }
+
     const age = calculateAge(formData.dob);
     if (!age || age < 18) {
       alert("Minimum age 18 required.");
       return false;
     }
-    const weight = parseInt(formData.weight, 10);
+
+    const weight = Number(formData.weight);
     if (Number.isNaN(weight) || weight < 50) {
       alert("Minimum weight 50kg required.");
       return false;
     }
+
     if (!formData.bloodGroup) {
       alert("कृपया रक्तगट निवडा.");
       return false;
     }
-    if (!formData.phone || formData.phone.trim().length < 6) {
+
+    const phoneRaw = (formData.phone || "").replace(/\s+/g, "");
+    if (!phoneRaw || phoneRaw.length < 6 || !/^[0-9+()-]{6,}$/.test(phoneRaw)) {
       alert("कृपया वैध फोन नंबर द्या.");
       return false;
     }
+
     if (!formData.camp) {
       alert("कृपया कॅम्प निवडा.");
       return false;
     }
+
+    // Ensure selected camp is still upcoming
+    if (!camps.some((c) => c._id === formData.camp)) {
+      alert("Selected camp is no longer available. कृपया दुसरा कॅम्प निवडा.");
+      return false;
+    }
+
     return true;
   };
 
@@ -186,26 +223,24 @@ const DonorRegistration = () => {
       return;
     }
 
-    // ensure selected camp still exists in upcoming list
-    const stillUpcoming = camps.some((c) => c._id === formData.camp);
-    if (!stillUpcoming) {
-      alert("Selected camp is no longer available.");
-      return;
-    }
-
     setSubmitting(true);
     try {
       const payload = {
-        ...formData,
+        name: formData.name.trim(),
         age: finalAge,
         weight: Number(formData.weight),
-        dob: new Date(formData.dob).toISOString(),
+        dob: formData.dob ? new Date(formData.dob).toISOString() : undefined,
+        bloodGroup: formData.bloodGroup,
+        email: formData.email ? formData.email.trim() : "",
+        phone: formData.phone ? formData.phone.trim() : "",
+        address: formData.address ? formData.address.trim() : "",
+        camp: formData.camp,
       };
 
       await axios.post(`${API_BASE}/donors`, payload);
 
       // fire-and-forget email (doesn't block UX)
-      sendEmail(formData, finalAge);
+      sendEmail(payload, finalAge);
 
       alert("🎉 Registration successful! Check your email for confirmation (if provided).");
 
@@ -249,15 +284,44 @@ const DonorRegistration = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="registration-form">
-          <input className="form-input" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
+          <input
+            className="form-input"
+            name="name"
+            placeholder="Full Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
 
           <label>Date of Birth</label>
-          <input className="form-input" type="date" name="dob" value={formData.dob} onChange={handleChange} required />
+          <input
+            className="form-input"
+            type="date"
+            name="dob"
+            value={formData.dob}
+            onChange={handleChange}
+            required
+          />
           {calculatedAge !== null && <p className="age-preview">Age: {calculatedAge} years</p>}
 
-          <input className="form-input" name="weight" type="number" placeholder="Weight (kg)" value={formData.weight} onChange={handleChange} required min="0" />
+          <input
+            className="form-input"
+            name="weight"
+            type="number"
+            placeholder="Weight (kg)"
+            value={formData.weight}
+            onChange={handleChange}
+            required
+            min="0"
+          />
 
-          <select className="form-select" name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} required>
+          <select
+            className="form-select"
+            name="bloodGroup"
+            value={formData.bloodGroup}
+            onChange={handleChange}
+            required
+          >
             <option value="">Select Blood Group</option>
             {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Don't Know"].map((bg) => (
               <option key={bg} value={bg}>
@@ -266,14 +330,43 @@ const DonorRegistration = () => {
             ))}
           </select>
 
-          <input className="form-input" name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} />
+          <input
+            className="form-input"
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+          />
 
-          <input className="form-input" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} required />
+          <input
+            className="form-input"
+            name="phone"
+            placeholder="Phone Number"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+          />
 
-          <textarea className="form-textarea" name="address" placeholder="Address" value={formData.address} onChange={handleChange} rows="3" required />
+          <textarea
+            className="form-textarea"
+            name="address"
+            placeholder="Address"
+            value={formData.address}
+            onChange={handleChange}
+            rows="3"
+            required
+          />
 
           <label>Choose an upcoming camp</label>
-          <select className="form-select" name="camp" value={formData.camp} onChange={handleChange} required disabled={campLocked || loadingCamps}>
+          <select
+            className="form-select"
+            name="camp"
+            value={formData.camp}
+            onChange={handleChange}
+            required
+            disabled={campLocked || loadingCamps}
+          >
             {loadingCamps ? (
               <option value="" disabled>
                 Loading camps...
@@ -286,7 +379,7 @@ const DonorRegistration = () => {
               <>
                 {!campLocked && <option value="">Select Camp</option>}
                 {camps.map((c) => (
-                  <option key={c._1d || c._id} value={c._id}>
+                  <option key={c._id} value={c._id}>
                     {c.name} — {c.date ? new Date(c.date).toLocaleDateString() : "TBA"}
                   </option>
                 ))}
